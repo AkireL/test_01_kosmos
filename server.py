@@ -1,7 +1,7 @@
 import socket
 import select
 
-HOST = '0.0.0.0'
+HOST = 'localhost'
 PORT = 5000
 
 server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -10,7 +10,7 @@ server_socket.listen(5)
 
 clients = []
 print("---------------------------------------")
-print(f"Server listening on {HOST}:{PORT}...")
+print(f"Server listening...")
 print("---------------------------------------")
 
 while True:
