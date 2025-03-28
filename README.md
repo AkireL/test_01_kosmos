@@ -10,5 +10,14 @@ El archivo `client.py` es el script que permite al usuario conectarse al servido
 2. Luego, ejecute el script `client.py` para comenzar a transmitir mensajes al servidor.
 3. Para iniciar más de un cliente, vuelv a ejecutar el script `client.py`.
 
+### Test
+
+Init server
+![Imagen del proyecto](server.png)
+
+
+Client connection
+
+![Imagen del proyecto](clients.png)
 
 
