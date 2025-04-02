@@ -1,41 +1,48 @@
-import socket
-import select
+import asyncio
 
 HOST = 'localhost'
-PORT = 5000
+PORT = 50000
+clients = set()  # Conjunto para almacenar clientes activos
 
-server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-server_socket.bind((HOST, PORT))
-server_socket.listen(5)
+async def handle_client(reader, writer):
+    """Maneja un cliente de forma asíncrona."""
+    addr = writer.get_extra_info('peername')
+    print(f"New client connected: {addr}")
+    clients.add(writer)
 
-clients = []
-print("---------------------------------------")
-print(f"Server listening...")
-print("---------------------------------------")
+    try:
+        while True:
+            data = await reader.read(1024)
+            if not data:
+                raise ConnectionResetError
 
-while True:
-    ready_sockets, _, _ = select.select([server_socket] + clients, [], [])
+            message = data.decode().strip()
+            print(f"Message from {addr}: {message}")
 
-    for s in ready_sockets:
-        if s == server_socket:
-            client_socket, client_address = server_socket.accept()
-            print(f"New client connected: {client_address}")
-            clients.append(client_socket)
-        else:
-            try:
-                message = s.recv(1024).decode().strip()
-                
-                if not message:
-                    raise ConnectionResetError
+            response = message.upper().encode()
+            writer.write(response)
+            await writer.drain()
 
-                print(f"A new message of {s.getpeername()}: {message}")
-                s.sendall(message.upper().encode())
+            if message == "DESCONEXION":
+                print(f"Closing connection with {addr}")
+                break
 
-                if message == "DESCONEXION":
-                    print(f"Closing connection with {s.getpeername()}")
-                    clients.remove(s)
-                    s.close()
-            except:
-                print(f"Client {s.getpeername()} disconnected.")
-                clients.remove(s)
-                s.close()
+    except ConnectionResetError:
+        print(f"Client {addr} disconnected unexpectedly.")
+    
+    finally:
+        clients.remove(writer)
+        writer.close()
+        await writer.wait_closed()
+        print(f"Connection with {addr} closed.")
+
+async def main():
+    server = await asyncio.start_server(handle_client, HOST, PORT)
+
+    addr = server.sockets[0].getsockname()
+    print(f"Server listening on {addr}...")
+
+    async with server:
+        await server.serve_forever()
+
+asyncio.run(main())
